@@ -162,7 +162,7 @@ impl<N: Network> Prover<N> {
                         pps.push_str(format!("{}m: {:.2} s/s, ", i, rate).as_str());
                     }
 
-                    info!("Solutions:{solutions}, Proofs:[ {pps}]");
+                    info!("Total Solutions:{solutions} ({pps})");
                 }
                 solutions += 1;
 
