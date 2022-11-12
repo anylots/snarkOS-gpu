@@ -147,6 +147,24 @@ impl<N: Network> Prover<N> {
                 }
 
                 let prover = prover.clone();
+                let now = std::time::Instant::now();
+                let elapsed = now.duration_since(when).as_secs_f64();
+
+                if elapsed % 60.0 < 0.1{
+                    status.pop_front();
+                    status.push_back(solutions);
+                }
+                if elapsed % 10.0 < 0.1 {
+                    let mut pps = String::from("");
+                    for i in [1, 5, 15, 30, 60] {
+                        let old = status.get(i - 1).unwrap_or(&0);
+                        let rate = (solutions - old) as f64 / (i * 60) as f64;
+                        pps.push_str(format!("{}m:{:.2} ", i, rate).as_str());
+                    }
+
+                    info!("solutions:{solutions}, pps:[ {pps}]");
+                }
+                solutions += 1;
 
                 spawn_task!(Self, {
                     // Set the status to `Proving`.
@@ -166,25 +184,6 @@ impl<N: Network> Prover<N> {
                             let latest_coinbase_target = block.coinbase_target();
                             // Retrieve the latest proof target.
                             let latest_proof_target = block.proof_target();
-
-                            let now = std::time::Instant::now();
-                            let elapsed = now.duration_since(when).as_secs_f64();
-
-                            if elapsed % 60.0 < 0.1{
-                                status.pop_front();
-                                status.push_back(solutions);
-                            }
-                            if elapsed % 10.0 < 0.1 {
-                                let mut pps = String::from("");
-                                for i in [1, 5, 15, 30, 60] {
-                                    let old = status.get(i - 1).unwrap_or(&0);
-                                    let rate = (solutions - old) as f64 / (i * 60) as f64;
-                                    pps.push_str(format!("{}m:{:.2} ", i, rate).as_str());
-                                }
-
-                                info!("solutions:{solutions}, pps:[ {pps}]");
-                            }
-                            solutions += 1;
 
                             // debug!(
                             //     "Proving 'CoinbasePuzzle' (Epoch {}, Block {}, Coinbase Target {}, Proof Target {})",
