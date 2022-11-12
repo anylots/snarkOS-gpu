@@ -170,11 +170,11 @@ impl<N: Network> Prover<N> {
                             let now = std::time::Instant::now();
                             let elapsed = now.duration_since(when).as_secs_f64();
 
-                            if elapsed % 60.0 < 0.001{
+                            if elapsed % 60.0 < 0.1{
                                 status.pop_front();
                                 status.push_back(solutions);
                             }
-                            if elapsed % 10.0 < 0.001 {
+                            if elapsed % 10.0 < 0.1 {
                                 let mut pps = String::from("");
                                 for i in [1, 5, 15, 30, 60] {
                                     let old = status.get(i - 1).unwrap_or(&0);
