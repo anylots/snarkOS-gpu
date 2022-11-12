@@ -159,7 +159,7 @@ impl<N: Network> Prover<N> {
                     for i in [1, 5, 15, 30, 60] {
                         let old = status.get(i - 1).unwrap_or(&0);
                         let rate = (solutions - old) as f64 / (i * 60) as f64;
-                        pps.push_str(format!("{}m: {:.2}p/s, ", i, rate).as_str());
+                        pps.push_str(format!("{}m: {:.2} s/s, ", i, rate).as_str());
                     }
 
                     info!("Solutions:{solutions}, Proofs:[ {pps}]");
