@@ -159,10 +159,10 @@ impl<N: Network> Prover<N> {
                     for i in [1, 5, 15, 30, 60] {
                         let old = status.get(i - 1).unwrap_or(&0);
                         let rate = (solutions - old) as f64 / (i * 60) as f64;
-                        pps.push_str(format!("{}m:{:.2} ", i, rate).as_str());
+                        pps.push_str(format!("{}m: {:.2}p/s, ", i, rate).as_str());
                     }
 
-                    info!("solutions:{solutions}, pps:[ {pps}]");
+                    info!("Solutions:{solutions}, Proofs:[ {pps}]");
                 }
                 solutions += 1;
 
@@ -185,13 +185,13 @@ impl<N: Network> Prover<N> {
                             // Retrieve the latest proof target.
                             let latest_proof_target = block.proof_target();
 
-                            debug!(
-                                "Proving 'CoinbasePuzzle' (Epoch {}, Block {}, Coinbase Target {}, Proof Target {})",
-                                epoch_challenge.epoch_number(),
-                                block.height(),
-                                latest_coinbase_target,
-                                latest_proof_target,
-                            );
+                            // debug!(
+                            //     "Proving 'CoinbasePuzzle' (Epoch {}, Block {}, Coinbase Target {}, Proof Target {})",
+                            //     epoch_challenge.epoch_number(),
+                            //     block.height(),
+                            //     latest_coinbase_target,
+                            //     latest_proof_target,
+                            // );
 
                             // Construct a prover solution.
                             let prover_solution = match prover.coinbase_puzzle.prove(
