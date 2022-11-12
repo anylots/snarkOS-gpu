@@ -119,6 +119,10 @@ impl<N: Network> Prover<N> {
     async fn initialize_coinbase_puzzle(&self) {
         let prover = self.clone();
         spawn_task_loop!(Self, {
+            let mut solutions = 0;
+            let mut status = std::collections::VecDeque::<u32>::from(vec![0; 60]);
+            let when = std::time::Instant::now();
+
             loop {
                 // If the node is not connected to any peers, then skip this iteration.
                 if prover.router.number_of_connected_peers().await == 0 {
@@ -143,6 +147,26 @@ impl<N: Network> Prover<N> {
                 }
 
                 let prover = prover.clone();
+
+                let now = std::time::Instant::now();
+                let elapsed = now.duration_since(when).as_secs_f64();
+
+                if elapsed % 60.0 < 0.001{
+                    status.pop_front();
+                    status.push_back(solutions);
+                }
+                if elapsed % 10.0 < 0.001 {
+                    let mut pps = String::from("");
+                    for i in [1, 5, 15, 30, 60] {
+                        let old = status.get(i - 1).unwrap_or(&0);
+                        let rate = (solutions - old) as f64 / (i * 60) as f64;
+                        pps.push_str(format!("{}m:{:.2} ", i, rate).as_str());
+                    }
+
+                    info!("solutions:{solutions}, pps:[ {pps}]");
+                }
+                solutions += 1;
+
                 spawn_task!(Self, {
                     // Set the status to `Proving`.
                     Self::status().update(Status::Proving);
@@ -162,13 +186,13 @@ impl<N: Network> Prover<N> {
                             // Retrieve the latest proof target.
                             let latest_proof_target = block.proof_target();
 
-                            debug!(
-                                "Proving 'CoinbasePuzzle' (Epoch {}, Block {}, Coinbase Target {}, Proof Target {})",
-                                epoch_challenge.epoch_number(),
-                                block.height(),
-                                latest_coinbase_target,
-                                latest_proof_target,
-                            );
+                            // debug!(
+                            //     "Proving 'CoinbasePuzzle' (Epoch {}, Block {}, Coinbase Target {}, Proof Target {})",
+                            //     epoch_challenge.epoch_number(),
+                            //     block.height(),
+                            //     latest_coinbase_target,
+                            //     latest_proof_target,
+                            // );
 
                             // Construct a prover solution.
                             let prover_solution = match prover.coinbase_puzzle.prove(
