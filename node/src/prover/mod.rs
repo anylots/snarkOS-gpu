@@ -185,13 +185,13 @@ impl<N: Network> Prover<N> {
                             // Retrieve the latest proof target.
                             let latest_proof_target = block.proof_target();
 
-                            // debug!(
-                            //     "Proving 'CoinbasePuzzle' (Epoch {}, Block {}, Coinbase Target {}, Proof Target {})",
-                            //     epoch_challenge.epoch_number(),
-                            //     block.height(),
-                            //     latest_coinbase_target,
-                            //     latest_proof_target,
-                            // );d
+                            debug!(
+                                "Proving 'CoinbasePuzzle' (Epoch {}, Block {}, Coinbase Target {}, Proof Target {})",
+                                epoch_challenge.epoch_number(),
+                                block.height(),
+                                latest_coinbase_target,
+                                latest_proof_target,
+                            );
 
                             // Construct a prover solution.
                             let prover_solution = match prover.coinbase_puzzle.prove(
