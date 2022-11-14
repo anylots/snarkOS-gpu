@@ -123,7 +123,7 @@ pub trait Outbound {
 
         // Send the message, if it is ready.
         if is_ready_to_send {
-            trace!("Sending '{}' to '{peer_ip}'", message.name());
+            //trace!("Sending '{}' to '{peer_ip}'", message.name());
             // Route the message to the peer.
             if let Err(error) = outbound_socket.send(message).await {
                 warn!("[OutboundRouter] {error}");

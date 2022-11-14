@@ -36,7 +36,7 @@ impl<N: Network> Inbound<N> for Prover<N> {
                 // Save the latest block in the prover.
                 self.latest_block.write().await.replace(block);
 
-                trace!("Received 'PuzzleResponse' from '{peer_ip}' (Epoch {epoch_number}, Block {block_height})");
+                //trace!("Received 'PuzzleResponse' from '{peer_ip}' (Epoch {epoch_number}, Block {block_height})");
                 true
             }
             Err(error) => {

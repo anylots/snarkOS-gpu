@@ -68,3 +68,6 @@ features = ["rt", "signal"]
 
 [dependencies.tracing]
 version = "0.1"
+
+[dependencies.colored]
+version = "2.0"

@@ -31,7 +31,7 @@ pub trait Inbound<N: Network>: Executor {
         let peer_ip = *peer.ip();
 
         // Process the message.
-        trace!("Received '{}' from '{peer_ip}'", message.name());
+        //trace!("Received '{}' from '{peer_ip}'", message.name());
         match message {
             Message::BlockRequest(message) => Self::block_request(message, peer_ip).await,
             Message::BlockResponse(message) => Self::block_response(message, peer_ip).await,

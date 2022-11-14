@@ -494,7 +494,7 @@ impl<N: Network> Router<N> {
 
     /// Handles the heartbeat request.
     async fn handle_heartbeat<E: Handshake>(&self) {
-        debug!("Peers: {:?}", self.connected_peers().await);
+        //debug!("Peers: {:?}", self.connected_peers().await);
 
         // TODO (howardwu): Remove this in Phase 3.
         if E::node_type().is_beacon() {

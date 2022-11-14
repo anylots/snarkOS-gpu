@@ -28,7 +28,7 @@ use core::time::Duration;
 use rand::Rng;
 use std::{
     net::SocketAddr,
-    sync::{atomic::AtomicU8, Arc},
+    sync::{atomic::AtomicU8, atomic::AtomicU32, Arc},
 };
 use time::OffsetDateTime;
 use tokio::sync::RwLock;
@@ -48,6 +48,9 @@ pub struct Prover<N: Network> {
     latest_block: Arc<RwLock<Option<Block<N>>>>,
     /// The number of puzzle instances.
     puzzle_instances: Arc<AtomicU8>,
+
+    solutions_prove: Arc<AtomicU32>,
+    solutions_found: Arc<AtomicU32>,
 }
 
 impl<N: Network> Prover<N> {
@@ -67,6 +70,9 @@ impl<N: Network> Prover<N> {
             latest_epoch_challenge: Default::default(),
             latest_block: Default::default(),
             puzzle_instances: Default::default(),
+
+            solutions_prove: Default::default(),
+            solutions_found: Default::default(),
         };
         // Initialize the router handler.
         router.initialize_handler(node.clone(), router_receiver).await;
@@ -118,11 +124,39 @@ impl<N: Network> Prover<N> {
     /// Initialize a new instance of the coinbase puzzle.
     async fn initialize_coinbase_puzzle(&self) {
         let prover = self.clone();
-        spawn_task_loop!(Self, {
-            let mut solutions = 0;
-            let mut status = std::collections::VecDeque::<u32>::from(vec![0; 60]);
-            let when = std::time::Instant::now();
 
+        spawn_task_loop!(Self, {
+            use colored::*;
+
+            let mut status = std::collections::VecDeque::<u32>::from(vec![0; 60]);
+            let mut timer_count = 0;
+            loop {
+                let new = prover.solutions_prove.load(std::sync::atomic::Ordering::SeqCst);
+                let mut pps = String::from("");
+                for i in [1, 5, 15, 30, 60] {
+                    let old = status.get(60 - i).unwrap_or(&0);
+                    let rate = (new - *old) as f64 / (i * 60) as f64;
+                    if rate > 0.8 {
+                        pps.push_str(format!("{}m: {:.2} s/s, ", i, rate).as_str());
+                    } else {
+                        pps.push_str(format!("{}m: --- s/s, ", i).as_str());
+                    }
+                }
+
+                let found = prover.solutions_found.load(std::sync::atomic::Ordering::SeqCst);
+                info!("{}", format!("{found}/{new}, {pps}").cyan().bold());
+
+                timer_count += 1;
+                if timer_count % (60 / 2) == 0 {
+                    status.pop_front();
+                    status.push_back(new);
+                }
+                tokio::time::sleep(Duration::from_secs(2)).await;
+            }
+        });
+
+        let prover = self.clone();
+        spawn_task_loop!(Self, {
             loop {
                 // If the node is not connected to any peers, then skip this iteration.
                 if prover.router.number_of_connected_peers().await == 0 {
@@ -146,26 +180,8 @@ impl<N: Network> Prover<N> {
                     }
                 }
 
+
                 let prover = prover.clone();
-                let now = std::time::Instant::now();
-                let elapsed = now.duration_since(when).as_secs_f64();
-
-                if elapsed % 60.0 < 0.1{
-                    status.pop_front();
-                    status.push_back(solutions);
-                }
-                if elapsed % 10.0 < 0.1 {
-                    let mut pps = String::from("");
-                    for i in [1, 5, 15, 30, 60] {
-                        let old = status.get(i - 1).unwrap_or(&0);
-                        let rate = (solutions - old) as f64 / (i * 60) as f64;
-                        pps.push_str(format!("{}m: {:.2} s/s, ", i, rate).as_str());
-                    }
-
-                    info!("Total solutions:{solutions} ({pps})");
-                }
-                solutions += 1;
-
                 spawn_task!(Self, {
                     // Set the status to `Proving`.
                     Self::status().update(Status::Proving);
@@ -181,7 +197,7 @@ impl<N: Network> Prover<N> {
                         // If the latest epoch challenge and latest block exists, then generate a prover solution.
                         if let (Some(epoch_challenge), Some(block)) = (latest_epoch_challenge, latest_block) {
                             // Retrieve the latest coinbase target.
-                            let latest_coinbase_target = block.coinbase_target();
+                            let _latest_coinbase_target = block.coinbase_target();
                             // Retrieve the latest proof target.
                             let latest_proof_target = block.proof_target();
 
@@ -193,6 +209,7 @@ impl<N: Network> Prover<N> {
                             //     latest_proof_target,
                             // );
 
+                            prover.solutions_prove.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
                             // Construct a prover solution.
                             let prover_solution = match prover.coinbase_puzzle.prove(
                                 &epoch_challenge,
@@ -201,8 +218,8 @@ impl<N: Network> Prover<N> {
                                 Some(latest_proof_target),
                             ) {
                                 Ok(proof) => proof,
-                                Err(error) => {
-                                    trace!("{error}");
+                                Err(_error) => {
+                                    //trace!("{error}");
                                     break;
                                 }
                             };
@@ -215,11 +232,14 @@ impl<N: Network> Prover<N> {
                                     break;
                                 }
                             };
+                        
 
                             // Ensure that the prover solution target is sufficient.
                             match prover_solution_target >= latest_proof_target {
                                 true => {
                                     info!("Found a Solution (Proof Target {prover_solution_target})");
+
+                                    prover.solutions_found.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
 
                                     // Propagate the "UnconfirmedSolution" to the network.
                                     let message = Message::UnconfirmedSolution(UnconfirmedSolution {
@@ -233,9 +253,7 @@ impl<N: Network> Prover<N> {
 
                                     break;
                                 }
-                                false => trace!(
-                                    "Prover solution was below the necessary proof target ({prover_solution_target} < {latest_proof_target})"
-                                ),
+                                false => {}, 
                             }
                         } else {
                             tokio::time::sleep(Duration::from_secs(1)).await;
