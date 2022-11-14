@@ -224,16 +224,16 @@ impl<N: Network> Prover<N> {
                                 Ok(proof) => proof,
                                 Err(_error) => {
                                     //trace!("{error}");
-                                    break;
+                                    // break;
                                 }
                             };
 
                             // Fetch the prover solution target.
                             let prover_solution_target = match prover_solution.to_target() {
                                 Ok(target) => target,
-                                Err(error) => {
-                                    warn!("Failed to fetch prover solution target: {error}");
-                                    break;
+                                Err(_error) => {
+                                    // warn!("Failed to fetch prover solution target: {error}");
+                                    // break;
                                 }
                             };
                         
@@ -255,7 +255,7 @@ impl<N: Network> Prover<N> {
                                         warn!("[UnconfirmedSolution] {error}");
                                     }
 
-                                    break;
+                                    // break;
                                 }
                                 false => {}, 
                             }
