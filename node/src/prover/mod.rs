@@ -90,8 +90,8 @@ impl<N: Network> Prover<N> {
             let mut status = std::collections::VecDeque::<u32>::from(vec![0; 60]);
             let mut timer_count = 0;
             loop {
-                if prover.router.number_of_connected_peers().await > 0 {
-                    let new = prover.solutions_prove.load(std::sync::atomic::Ordering::SeqCst);
+                let new = prover.solutions_prove.load(std::sync::atomic::Ordering::SeqCst);
+                if new > 0 {
                     let mut pps = String::from("");
                     for i in [1, 5, 15, 30, 60] {
                         let old = status.get(60 - i).unwrap_or(&0);
