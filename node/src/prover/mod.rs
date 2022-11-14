@@ -76,10 +76,8 @@ impl<N: Network> Prover<N> {
         };
         // Initialize the router handler.
         router.initialize_handler(node.clone(), router_receiver).await;
-        for _ in 0..6 {
-            // Initialize the coinbase puzzle.
-            node.initialize_coinbase_puzzle().await;
-        }
+        // Initialize the coinbase puzzle.
+        node.initialize_coinbase_puzzle().await;
         // Initialize the signal handler.
         node.handle_signals();
 
