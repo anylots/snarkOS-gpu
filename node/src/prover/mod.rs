@@ -86,33 +86,36 @@ impl<N: Network> Prover<N> {
         let prover = node.clone();
         spawn_task_loop!(Self, {
             use colored::*;
-
+    
             let mut status = std::collections::VecDeque::<u32>::from(vec![0; 60]);
             let mut timer_count = 0;
             loop {
-                let new = prover.solutions_prove.load(std::sync::atomic::Ordering::SeqCst);
-                let mut pps = String::from("");
-                for i in [1, 5, 15, 30, 60] {
-                    let old = status.get(60 - i).unwrap_or(&0);
-                    let rate = (new - *old) as f64 / (i * 60) as f64;
-                    if rate > 0.8 {
-                        pps.push_str(format!("{}m: {:.2} s/s, ", i, rate).as_str());
-                    } else {
-                        pps.push_str(format!("{}m: --- s/s, ", i).as_str());
+                if prover.router.number_of_connected_peers().await > 0 {
+                    let new = prover.solutions_prove.load(std::sync::atomic::Ordering::SeqCst);
+                    let mut pps = String::from("");
+                    for i in [1, 5, 15, 30, 60] {
+                        let old = status.get(60 - i).unwrap_or(&0);
+                        let rate = (new - *old) as f64 / (i * 60) as f64;
+                        if rate > 0.8 {
+                            pps.push_str(format!("{}m: {:.2} s/s, ", i, rate).as_str());
+                        } else {
+                            pps.push_str(format!("{}m: --- s/s, ", i).as_str());
+                        }
                     }
+        
+                    let found = prover.solutions_found.load(std::sync::atomic::Ordering::SeqCst);
+                    info!("{}", format!("{found}/{new}, {pps}").cyan().bold());
+        
+                    timer_count += 1;
+                    if timer_count % (60 / 2) == 0 {
+                        status.pop_front();
+                        status.push_back(new);
+                    }
+                    tokio::time::sleep(Duration::from_secs(2)).await;
                 }
-
-                let found = prover.solutions_found.load(std::sync::atomic::Ordering::SeqCst);
-                info!("{}", format!("{found}/{new}, {pps}").cyan().bold());
-
-                timer_count += 1;
-                if timer_count % (60 / 2) == 0 {
-                    status.pop_front();
-                    status.push_back(new);
-                }
-                tokio::time::sleep(Duration::from_secs(2)).await;
             }
         });
+
         // Return the node.
         Ok(node)
     }
