@@ -92,6 +92,11 @@ impl<N: Network> Prover<N> {
             loop {
                 let new = prover.solutions_prove.load(std::sync::atomic::Ordering::SeqCst);
                 if new > 0 {
+                    if timer_count % (60 / 2) == 0 {
+                        status.pop_front();
+                        status.push_back(new);
+                    }
+
                     let mut pps = String::from("");
                     for i in [1, 5, 15, 30, 60] {
                         let old = status.get(60 - i).unwrap_or(&0);
@@ -107,10 +112,6 @@ impl<N: Network> Prover<N> {
                     info!("{}", format!("{found}/{new}, {pps}").cyan().bold());
         
                     timer_count += 1;
-                    if timer_count % (60 / 2) == 0 {
-                        status.pop_front();
-                        status.push_back(new);
-                    }
                     tokio::time::sleep(Duration::from_secs(2)).await;
                 }
             }
