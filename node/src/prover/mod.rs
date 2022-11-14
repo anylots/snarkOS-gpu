@@ -261,7 +261,7 @@ impl<N: Network> Prover<N> {
                             //     false => {}, 
                             // }
                         } else {
-                            // tokio::time::sleep(Duration::from_secs(1)).await;
+                            tokio::time::sleep(Duration::from_millis(50)).await;
                         }
                     }
 
