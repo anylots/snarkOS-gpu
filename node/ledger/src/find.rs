@@ -60,7 +60,7 @@ impl<N: Network, C: ConsensusStorage<N>> Ledger<N, C> {
         filter: RecordsFilter<N>,
     ) -> Result<impl '_ + Iterator<Item = (Field<N>, Cow<'_, Record<N, Ciphertext<N>>>)>> {
         // Derive the address from the view key.
-        let address = view_key.to_address();
+        let address_x_coordinate = view_key.to_address().to_x_coordinate();
         // Derive the `sk_tag` from the graph key.
         let sk_tag = match GraphKey::try_from(view_key) {
             Ok(graph_key) => graph_key.sk_tag(),
@@ -112,9 +112,11 @@ impl<N: Network, C: ConsensusStorage<N>> Ledger<N, C> {
             };
 
             match commitment {
-                Ok(Some(commitment)) => match record.is_owner(&address, view_key) {
-                    true => Some((commitment, record)),
-                    false => None,
+                Ok(Some(commitment)) => {
+                    match record.is_owner_with_address_x_coordinate(view_key, &address_x_coordinate) {
+                        true => Some((commitment, record)),
+                        false => None,
+                    }
                 },
                 Ok(None) => None,
                 Err(e) => {
