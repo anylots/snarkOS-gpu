@@ -284,6 +284,5 @@ impl<N: Network, C: ConsensusStorage<N>> Ledger<N, C> {
             None,
             rng,
         )
-        
     }
 }

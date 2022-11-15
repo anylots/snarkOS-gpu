@@ -27,9 +27,9 @@ impl<N: Network> Inbound<N> for Prover<N> {
         match message.block.deserialize().await {
             Ok(block) => {
                 // Retrieve the epoch number.
-                let epoch_number = epoch_challenge.epoch_number();
+                let _epoch_number = epoch_challenge.epoch_number();
                 // Retrieve the block height.
-                let block_height = block.height();
+                let _block_height = block.height();
 
                 // Save the latest epoch challenge in the prover.
                 self.latest_epoch_challenge.write().await.replace(epoch_challenge);

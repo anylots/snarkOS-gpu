@@ -157,7 +157,6 @@ impl<N: Network> Prover<N> {
     /// Initialize a new instance of the coinbase puzzle.
     async fn initialize_coinbase_puzzle(&self) {
         let prover = self.clone();
-
         spawn_task_loop!(Self, {
             loop {
                 // If the node is not connected to any peers, then skip this iteration.
@@ -181,7 +180,6 @@ impl<N: Network> Prover<N> {
                         continue;
                     }
                 }
-
 
                 let prover = prover.clone();
                 spawn_task!(Self, {
@@ -261,7 +259,7 @@ impl<N: Network> Prover<N> {
                             //     false => {}, 
                             // }
                         } else {
-                            tokio::time::sleep(Duration::from_millis(50)).await;
+                            tokio::time::sleep(Duration::from_secs(1)).await;
                         }
                     }
 
