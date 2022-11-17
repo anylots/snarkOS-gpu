@@ -238,7 +238,7 @@ impl<N: Network> Prover<N> {
                             };
 
                             // Fetch the prover solution target.
-                            let prover_solution_target = match prover_solution.to_target() {
+                            let _prover_solution_target = match prover_solution.to_target() {
                                 Ok(target) => target,
                                 Err(error) => {
                                     warn!("Failed to fetch prover solution target: {error}");
@@ -247,26 +247,24 @@ impl<N: Network> Prover<N> {
                             };
 
                             // Ensure that the prover solution target is sufficient.
-                            match prover_solution_target >= latest_proof_target {
-                                true => {
-                                    info!("Found a Solution (Proof Target {prover_solution_target})");
-                                    prover.solutions_found.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
-                                    // Propagate the "UnconfirmedSolution" to the network.
-                                    let message = Message::UnconfirmedSolution(UnconfirmedSolution {
-                                        puzzle_commitment: prover_solution.commitment(),
-                                        solution: Data::Object(prover_solution),
-                                    });
-                                    let request = RouterRequest::MessagePropagate(message, vec![]);
-                                    if let Err(error) = prover.router.process(request).await {
-                                        warn!("[UnconfirmedSolution] {error}");
-                                    }
+                            // match prover_solution_target >= latest_proof_target {
+                            //     true => {
+                            //         info!("Found a Solution (Proof Target {prover_solution_target})");
+                            //         prover.solutions_found.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+                            //         // Propagate the "UnconfirmedSolution" to the network.
+                            //         let message = Message::UnconfirmedSolution(UnconfirmedSolution {
+                            //             puzzle_commitment: prover_solution.commitment(),
+                            //             solution: Data::Object(prover_solution),
+                            //         });
+                            //         let request = RouterRequest::MessagePropagate(message, vec![]);
+                            //         if let Err(error) = prover.router.process(request).await {
+                            //             warn!("[UnconfirmedSolution] {error}");
+                            //         }
 
-                                    break;
-                                }
-                                false => trace!(
-                                    "Prover solution was below the necessary proof target ({prover_solution_target} < {latest_proof_target})"
-                                ),
-                            }
+                            //         break;
+                            //     }
+                            //     false => {},
+                            // }
                         } else {
                             tokio::time::sleep(Duration::from_secs(1)).await;
                         }
