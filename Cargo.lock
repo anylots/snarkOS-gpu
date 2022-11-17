@@ -2422,6 +2422,7 @@ dependencies = [
  "time",
  "tokio",
  "tracing",
+ "tracing-test",
 ]
 
 [[package]]

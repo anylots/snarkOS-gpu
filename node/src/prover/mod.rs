@@ -28,7 +28,10 @@ use core::time::Duration;
 use rand::Rng;
 use std::{
     net::SocketAddr,
-    sync::{atomic::AtomicU8, atomic::AtomicU32, Arc},
+    sync::{
+        atomic::{AtomicU32, AtomicU8},
+        Arc,
+    },
 };
 use time::OffsetDateTime;
 use tokio::sync::RwLock;
@@ -84,7 +87,7 @@ impl<N: Network> Prover<N> {
         let prover = node.clone();
         spawn_task_loop!(Self, {
             use colored::*;
-    
+
             let mut status = std::collections::VecDeque::<u32>::from(vec![0; 60]);
             let mut timer_count = 0;
             loop {
@@ -105,10 +108,10 @@ impl<N: Network> Prover<N> {
                             pps.push_str(format!("{}m: --- s/s, ", i).as_str());
                         }
                     }
-        
+
                     let found = prover.solutions_found.load(std::sync::atomic::Ordering::SeqCst);
-                    info!("{}", format!("{found}/{new}, {pps}").cyan().bold());
-        
+                    info!("{}", format!("Found solutions/proved solutions {found}/{new}, {pps}").cyan().bold());
+
                     timer_count += 1;
                     tokio::time::sleep(Duration::from_secs(2)).await;
                 }
@@ -210,54 +213,51 @@ impl<N: Network> Prover<N> {
                             // );
 
                             prover.solutions_prove.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
-                            prover.coinbase_puzzle.prove(
+
+                            // Construct a prover solution.
+                            let prover_solution = match prover.coinbase_puzzle.prove(
                                 &epoch_challenge,
                                 prover.address(),
                                 rand::thread_rng().gen(),
                                 Some(latest_proof_target),
-                            );
-                            // Construct a prover solution.
-                            // let prover_solution = match prover.coinbase_puzzle.prove(
-                            //     &epoch_challenge,
-                            //     prover.address(),
-                            //     rand::thread_rng().gen(),
-                            //     Some(latest_proof_target),
-                            // ) {
-                            //     Ok(proof) => proof,
-                            //     Err(error) => {
-                            //         // trace!("{error}");
-                            //         // break;
-                            //     }
-                            // };
+                            ) {
+                                Ok(proof) => proof,
+                                Err(error) => {
+                                    trace!("{error}");
+                                    break;
+                                }
+                            };
 
                             // Fetch the prover solution target.
-                            // let prover_solution_target = match prover_solution.to_target() {
-                            //     Ok(target) => target,
-                            //     Err(error) => {
-                            //         // warn!("Failed to fetch prover solution target: {error}");
-                            //         // break;
-                            //     }
-                            // };
-                        
+                            let prover_solution_target = match prover_solution.to_target() {
+                                Ok(target) => target,
+                                Err(error) => {
+                                    warn!("Failed to fetch prover solution target: {error}");
+                                    break;
+                                }
+                            };
 
                             // Ensure that the prover solution target is sufficient.
-                            // match prover_solution_target >= latest_proof_target {
-                            //     true => {
-                            //         info!("Found a Solution (Proof Target {prover_solution_target})");
-                            //         prover.solutions_found.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
-                            //         // Propagate the "UnconfirmedSolution" to the network.
-                            //         let message = Message::UnconfirmedSolution(UnconfirmedSolution {
-                            //             puzzle_commitment: prover_solution.commitment(),
-                            //             solution: Data::Object(prover_solution),
-                            //         });
-                            //         let request = RouterRequest::MessagePropagate(message, vec![]);
-                            //         if let Err(error) = prover.router.process(request).await {
-                            //             warn!("[UnconfirmedSolution] {error}");
-                            //         }
-                            //         break;
-                            //     }
-                            //     false => {}, 
-                            // }
+                            match prover_solution_target >= latest_proof_target {
+                                true => {
+                                    info!("Found a Solution (Proof Target {prover_solution_target})");
+
+                                    // Propagate the "UnconfirmedSolution" to the network.
+                                    let message = Message::UnconfirmedSolution(UnconfirmedSolution {
+                                        puzzle_commitment: prover_solution.commitment(),
+                                        solution: Data::Object(prover_solution),
+                                    });
+                                    let request = RouterRequest::MessagePropagate(message, vec![]);
+                                    if let Err(error) = prover.router.process(request).await {
+                                        warn!("[UnconfirmedSolution] {error}");
+                                    }
+
+                                    break;
+                                }
+                                false => trace!(
+                                    "Prover solution was below the necessary proof target ({prover_solution_target} < {latest_proof_target})"
+                                ),
+                            }
                         } else {
                             tokio::time::sleep(Duration::from_secs(1)).await;
                         }
