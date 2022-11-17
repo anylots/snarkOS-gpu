@@ -110,20 +110,21 @@ impl<N: Network> Prover<N> {
                 let m15 = *log.get(45).unwrap_or(&0);
                 let m30 = *log.get(30).unwrap_or(&0);
                 let m60 = log.pop_front().unwrap_or_default();
-
-                info!(
-                    "{}",
-                    Cyan.normal().paint(format!(
-                        "Total/sufficient solutions: {}/{}, (1m: {} s/s, 5m: {} s/s, 15m: {} s/s, 30m: {} s/s, 60m: {} s/s)",
-                        solutions,
-                        found,
-                        calculate_proof_rate(solutions, m1, 1),
-                        calculate_proof_rate(solutions, m5, 5),
-                        calculate_proof_rate(solutions, m15, 15),
-                        calculate_proof_rate(solutions, m30, 30),
-                        calculate_proof_rate(solutions, m60, 60),
-                    ))
-                );
+                if solutions > 0 {
+                    info!(
+                        "{}",
+                        Cyan.normal().paint(format!(
+                            "Total/sufficient solutions: {}/{}, (1m: {} s/s, 5m: {} s/s, 15m: {} s/s, 30m: {} s/s, 60m: {} s/s)",
+                            solutions,
+                            found,
+                            calculate_proof_rate(solutions, m1, 1),
+                            calculate_proof_rate(solutions, m5, 5),
+                            calculate_proof_rate(solutions, m15, 15),
+                            calculate_proof_rate(solutions, m30, 30),
+                            calculate_proof_rate(solutions, m60, 60),
+                        ))
+                    );
+                }
             }
         });
 
