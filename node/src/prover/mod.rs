@@ -224,28 +224,35 @@ impl<N: Network> Prover<N> {
 
                             prover.solutions_prove.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
 
-                            // Construct a prover solution.
-                            let prover_solution = match prover.coinbase_puzzle.prove(
+                            prover.coinbase_puzzle.prove(
                                 &epoch_challenge,
                                 prover.address(),
                                 rand::thread_rng().gen(),
                                 Some(latest_proof_target),
-                            ) {
-                                Ok(proof) => proof,
-                                Err(error) => {
-                                    trace!("{error}");
-                                    break;
-                                }
-                            };
+                            );
+
+                            // Construct a prover solution.
+                            // let prover_solution = match prover.coinbase_puzzle.prove(
+                            //     &epoch_challenge,
+                            //     prover.address(),
+                            //     rand::thread_rng().gen(),
+                            //     Some(latest_proof_target),
+                            // ) {
+                            //     Ok(proof) => proof,
+                            //     Err(error) => {
+                            //         trace!("{error}");
+                            //         break;
+                            //     }
+                            // };
 
                             // Fetch the prover solution target.
-                            let _prover_solution_target = match prover_solution.to_target() {
-                                Ok(target) => target,
-                                Err(error) => {
-                                    warn!("Failed to fetch prover solution target: {error}");
-                                    break;
-                                }
-                            };
+                            // let _prover_solution_target = match prover_solution.to_target() {
+                            //     Ok(target) => target,
+                            //     Err(error) => {
+                            //         warn!("Failed to fetch prover solution target: {error}");
+                            //         break;
+                            //     }
+                            // };
 
                             // Ensure that the prover solution target is sufficient.
                             // match prover_solution_target >= latest_proof_target {
@@ -272,11 +279,11 @@ impl<N: Network> Prover<N> {
                     }
 
                     // Set the status to `Ready`.
-                    Self::status().update(Status::Ready);
+                    // Self::status().update(Status::Ready);
                     // Decrement the number of puzzle instances.
-                    prover.puzzle_instances.fetch_sub(1, std::sync::atomic::Ordering::SeqCst);
+                    // prover.puzzle_instances.fetch_sub(1, std::sync::atomic::Ordering::SeqCst);
                     // Sleep briefly to give this instance a chance to clear state.
-                    tokio::time::sleep(Duration::from_millis(50)).await;
+                    // tokio::time::sleep(Duration::from_millis(50)).await;
                 });
             }
         });
