@@ -23,6 +23,7 @@ use snarkos_node_messages::{Data, Message, PuzzleResponse, UnconfirmedSolution};
 use snarkos_node_router::{Handshake, Inbound, Outbound, Router, RouterRequest};
 use snarkvm::prelude::{Address, Block, CoinbasePuzzle, EpochChallenge, Network, PrivateKey, ProverSolution, ViewKey};
 
+use ansi_term::Colour::Cyan;
 use anyhow::Result;
 use core::time::Duration;
 use rand::Rng;
@@ -86,35 +87,43 @@ impl<N: Network> Prover<N> {
 
         let prover = node.clone();
         spawn_task_loop!(Self, {
-            use colored::*;
-
-            let mut status = std::collections::VecDeque::<u32>::from(vec![0; 60]);
-            let mut timer_count = 0;
-            loop {
-                let new = prover.solutions_prove.load(std::sync::atomic::Ordering::SeqCst);
-                if new > 0 {
-                    if timer_count % (60 / 2) == 0 {
-                        status.pop_front();
-                        status.push_back(new);
-                    }
-
-                    let mut pps = String::from("");
-                    for i in [1, 5, 15, 30, 60] {
-                        let old = status.get(60 - i).unwrap_or(&0);
-                        let rate = (new - *old) as f64 / (i * 60) as f64;
-                        if rate > 0.8 {
-                            pps.push_str(format!("{}m: {:.2} s/s, ", i, rate).as_str());
-                        } else {
-                            pps.push_str(format!("{}m: --- s/s, ", i).as_str());
-                        }
-                    }
-
-                    let found = prover.solutions_found.load(std::sync::atomic::Ordering::SeqCst);
-                    info!("{}", format!("Found solutions/proved solutions {found}/{new}, {pps}").cyan().bold());
-
-                    timer_count += 1;
-                    tokio::time::sleep(Duration::from_secs(2)).await;
+            fn calculate_proof_rate(now: u32, past: u32, interval: u32) -> Box<str> {
+                if interval < 1 {
+                    return Box::from("---");
                 }
+                if now <= past || past == 0 {
+                    return Box::from("---");
+                }
+                let rate = (now - past) as f64 / (interval * 60) as f64;
+                Box::from(format!("{:.2}", rate))
+            }
+
+            let mut log = std::collections::VecDeque::<u32>::from(vec![0; 60]);
+
+            loop {
+                tokio::time::sleep(Duration::from_secs(60)).await;
+                let solutions = prover.solutions_prove.load(std::sync::atomic::Ordering::SeqCst);
+                let found = prover.solutions_found.load(std::sync::atomic::Ordering::SeqCst);
+                log.push_back(solutions);
+                let m1 = *log.get(59).unwrap_or(&0);
+                let m5 = *log.get(55).unwrap_or(&0);
+                let m15 = *log.get(45).unwrap_or(&0);
+                let m30 = *log.get(30).unwrap_or(&0);
+                let m60 = log.pop_front().unwrap_or_default();
+
+                info!(
+                    "{}",
+                    Cyan.normal().paint(format!(
+                        "Total/sufficient solutions: {}/{}, (1m: {} s/s, 5m: {} s/s, 15m: {} s/s, 30m: {} s/s, 60m: {} s/s)",
+                        solutions,
+                        found,
+                        calculate_proof_rate(solutions, m1, 1),
+                        calculate_proof_rate(solutions, m5, 5),
+                        calculate_proof_rate(solutions, m15, 15),
+                        calculate_proof_rate(solutions, m30, 30),
+                        calculate_proof_rate(solutions, m60, 60),
+                    ))
+                );
             }
         });
 
@@ -241,7 +250,7 @@ impl<N: Network> Prover<N> {
                             match prover_solution_target >= latest_proof_target {
                                 true => {
                                     info!("Found a Solution (Proof Target {prover_solution_target})");
-
+                                    prover.solutions_found.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
                                     // Propagate the "UnconfirmedSolution" to the network.
                                     let message = Message::UnconfirmedSolution(UnconfirmedSolution {
                                         puzzle_commitment: prover_solution.commitment(),

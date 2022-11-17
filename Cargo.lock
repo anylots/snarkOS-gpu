@@ -127,6 +127,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7e4f181fc1a372e8ceff89612e5c9b13f72bff5b066da9f8d6827ae65af492c4"
 
 [[package]]
+name = "ansi_term"
+version = "0.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d52a9bb7ec0cf484c551830a7ce27bd20d67eac647e1befb56b0be4ee39a55d2"
+dependencies = [
+ "winapi",
+]
+
+[[package]]
 name = "anyhow"
 version = "1.0.66"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2404,9 +2413,9 @@ dependencies = [
 name = "snarkos-node"
 version = "2.0.2"
 dependencies = [
+ "ansi_term",
  "anyhow",
  "async-trait",
- "colored",
  "parking_lot",
  "rand",
  "serde_json",
@@ -2422,7 +2431,6 @@ dependencies = [
  "time",
  "tokio",
  "tracing",
- "tracing-test",
 ]
 
 [[package]]
