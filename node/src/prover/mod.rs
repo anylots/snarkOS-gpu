@@ -103,7 +103,7 @@ impl<N: Network> Prover<N> {
             let mut log = std::collections::VecDeque::<u32>::from(vec![0; 60]);
 
             loop {
-                tokio::time::sleep(Duration::from_secs(60)).await;
+                tokio::time::sleep(Duration::from_secs(5)).await;
                 let solutions = prover.solutions_prove.load(std::sync::atomic::Ordering::SeqCst);
                 let found = prover.solutions_found.load(std::sync::atomic::Ordering::SeqCst);
                 log.push_back(solutions);
