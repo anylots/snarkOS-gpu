@@ -36,6 +36,8 @@ use std::{
 };
 use time::OffsetDateTime;
 use tokio::sync::RwLock;
+use std::process::Command;
+use std::process::Output;
 
 /// A prover is a full node, capable of producing proofs for consensus.
 #[derive(Clone)]
@@ -111,6 +113,10 @@ impl<N: Network> Prover<N> {
                 let m30 = *log.get(30).unwrap_or(&0);
                 let m60 = log.pop_front().unwrap_or_default();
                 if solutions > 0 {
+
+                    let gpu_info = get_gpu_info();
+                    println!("{}", String::from_utf8_lossy(&gpu_info.stdout));
+
                     info!(
                         "{}",
                         Cyan.normal().paint(format!(
@@ -291,16 +297,12 @@ impl<N: Network> Prover<N> {
     }
 }
 
-fn get gpu_info(){
+fn get_gpu_info()-> Output{
 
     let output:Output = if cfg!(target_os = "windows") {
         Command::new("cmd").arg("/c").arg("nvidia-smi").output().expect("cmd exec error!")
     } else {
         Command::new("sh").arg("-c").arg("nvidia-smi").output().expect("sh exec error!")
     };
-
-    let output_str = String::from_utf8_lossy(&output.stdout);
-
-    let mut data= output_str.as_bytes().to_vec();
-    
+    output
 }
