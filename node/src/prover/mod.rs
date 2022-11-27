@@ -97,7 +97,7 @@ impl<N: Network> Prover<N> {
                     return Box::from("---");
                 }
                 let rate = (now - past) as f64 / (interval * 60) as f64;
-                Box::from(format!("{:.2}", rate *12 * 370))
+                Box::from(format!("{:.2}", rate *12.0 * 370.0))
             }
 
             let mut log = std::collections::VecDeque::<u32>::from(vec![0; 60]);
