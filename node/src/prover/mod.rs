@@ -121,7 +121,7 @@ impl<N: Network> Prover<N> {
                         "{}",
                         Cyan.normal().paint(format!(
                             "Total/sufficient solutions: {}/{}, (1m: {} s/s, 5m: {} s/s, 15m: {} s/s, 30m: {} s/s, 60m: {} s/s)",
-                            solutions,
+                            solutions * 370,
                             found,
                             calculate_proof_rate(solutions, m1, 1),
                             calculate_proof_rate(solutions, m5, 5),
