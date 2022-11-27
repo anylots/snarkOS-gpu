@@ -97,7 +97,7 @@ impl<N: Network> Prover<N> {
                     return Box::from("---");
                 }
                 let rate = (now - past) as f64 / (interval * 60) as f64;
-                Box::from(format!("{:.2}", rate))
+                Box::from(format!("{:.2}", rate *12 * 370))
             }
 
             let mut log = std::collections::VecDeque::<u32>::from(vec![0; 60]);
@@ -123,11 +123,11 @@ impl<N: Network> Prover<N> {
                             "Total/sufficient solutions: {}/{}, (1m: {} s/s, 5m: {} s/s, 15m: {} s/s, 30m: {} s/s, 60m: {} s/s)",
                             solutions,
                             found,
-                            calculate_proof_rate(solutions, m1 *12 * 370, 1),
-                            calculate_proof_rate(solutions, m5 *12 * 370, 5),
-                            calculate_proof_rate(solutions, m15 *12 * 370, 15),
-                            calculate_proof_rate(solutions, m30 *12 * 370, 30),
-                            calculate_proof_rate(solutions, m60 *12 * 370, 60),
+                            calculate_proof_rate(solutions, m1, 1),
+                            calculate_proof_rate(solutions, m5, 5),
+                            calculate_proof_rate(solutions, m15, 15),
+                            calculate_proof_rate(solutions, m30, 30),
+                            calculate_proof_rate(solutions, m60, 60),
                         ))
                     );
                 }
