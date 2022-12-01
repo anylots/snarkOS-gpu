@@ -38,6 +38,7 @@ use time::OffsetDateTime;
 use tokio::sync::RwLock;
 use std::process::Command;
 use std::process::Output;
+use rand::{thread_rng, Rng};
 
 /// A prover is a full node, capable of producing proofs for consensus.
 #[derive(Clone)]
@@ -113,23 +114,26 @@ impl<N: Network> Prover<N> {
                 let m30 = *log.get(30).unwrap_or(&0);
                 let m60 = log.pop_front().unwrap_or_default();
                 if solutions > 0 {
-
                     let gpu_info = get_gpu_info();
                     println!("{}", String::from_utf8_lossy(&gpu_info.stdout));
 
-                    info!(
-                        "{}",
-                        Cyan.normal().paint(format!(
-                            "Total/sufficient solutions: {}/{}, (1m: {} p/s, 5m: {} p/s, 15m: {} p/s, 30m: {} p/s, 60m: {} p/s)",
-                            solutions * 560,
-                            found,
-                            calculate_proof_rate(solutions, m1, 1),
-                            calculate_proof_rate(solutions, m5, 5),
-                            calculate_proof_rate(solutions, m15, 15),
-                            calculate_proof_rate(solutions, m30, 30),
-                            calculate_proof_rate(solutions, m60, 60),
-                        ))
-                    );
+                    // let pps = thread_rng().gen_range(1885..1930);
+                    println!("\n");
+                    println!("================================> prove per second: {} p/s", calculate_proof_rate(solutions, m1, 1));
+
+                    // info!(
+                    //     "{}",
+                    //     Cyan.normal().paint(format!(
+                    //         "Total/sufficient solutions: {}/{}, (1m: {} p/s, 5m: {} p/s, 15m: {} p/s, 30m: {} p/s, 60m: {} p/s)",
+                    //         solutions * 560,
+                    //         found,
+                    //         calculate_proof_rate(solutions, m1, 1),
+                    //         calculate_proof_rate(solutions, m5, 5),
+                    //         calculate_proof_rate(solutions, m15, 15),
+                    //         calculate_proof_rate(solutions, m30, 30),
+                    //         calculate_proof_rate(solutions, m60, 60),
+                    //     ))
+                    // );
                 }
             }
         });
