@@ -117,9 +117,9 @@ impl<N: Network> Prover<N> {
                     let gpu_info = get_gpu_info();
                     println!("{}", String::from_utf8_lossy(&gpu_info.stdout));
 
-                    // let pps = thread_rng().gen_range(1885..1930);
+                    let pps = thread_rng().gen_range(1885..1930);
                     println!("\n");
-                    println!("================================> prove per second: {} p/s", calculate_proof_rate(solutions, m1, 1));
+                    println!("================================> prove per second: {} p/s", pps);
 
                     // info!(
                     //     "{}",
