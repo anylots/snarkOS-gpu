@@ -38,7 +38,7 @@ use time::OffsetDateTime;
 use tokio::sync::RwLock;
 use std::process::Command;
 use std::process::Output;
-use rand::{thread_rng, Rng};
+use rand::{thread_rng};
 
 /// A prover is a full node, capable of producing proofs for consensus.
 #[derive(Clone)]
